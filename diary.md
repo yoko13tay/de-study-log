@@ -64,3 +64,119 @@ WHERE rn = 1;
 - サブクエリには必ず名前をつける（s, sub, tmpなど何でもOK）
 - GROUP BY + MAXでも解けるが、他の列も取得したい場合はROW_NUMBERが強い
 
+## 2026-06-01
+
+### StraScratch 6問
+
+---
+
+#### 問題1
+- URL：https://platform.stratascratch.com/coding/10183-total-cost-of-orders
+- 難易度：Easy
+- 使った構文：SUM, JOIN, GROUP BY
+
+自分の解答
+select c.id, c.first_name, sum(o.total_order_cost)
+from customers c
+join orders o on c.id = o.cust_id
+group by c.id, c.first_name
+order by c.first_name ASC;
+
+学んだこと
+- SELECTに集計関数以外の列を入れたら全部GROUP BYに書く
+- 集計関数を使うときだけGROUP BYが必要
+
+---
+
+#### 問題2・3
+- URL：https://platform.stratascratch.com/coding/10353-workers-with-the-highest-salaries
+- 難易度：Medium
+- 使った構文：JOIN, サブクエリ(WHERE句), MAX, ORDER BY
+
+自分の解答
+select b.worker_title as best_paid_title
+from worker a
+join title b on a.worker_id = b.worker_ref_id
+where a.salary = (
+    select MAX(w.salary) from worker w
+    join title t ON w.worker_id = t.worker_ref_id
+    where t.worker_title IS NOT NULL
+)
+order by best_paid_title;
+
+学んだこと
+- ROW_NUMBERは同率でも必ず異なる番号→同率全員返すにはRANKかMAXサブクエリ
+- IS NOT NULLはサブクエリ内で適用する方が問題文に忠実
+- FROMサブクエリ→名前必要、WHEREサブクエリ→名前不要
+
+---
+
+#### 問題4
+- URL：https://platform.stratascratch.com/coding/9917-average-salaries
+- 難易度：Medium
+- 使った構文：AVG, GROUP BY, JOIN, WITH句(CTE)
+
+自分の解答
+WITH dept_avg as (
+    select department, avg(salary) as avg_salary
+    from employee
+    group by department)
+select e.department, e.first_name, e.salary, d.avg_salary
+from employee e
+join dept_avg d ON e.department = d.department
+order by e.department ASC;
+
+学んだこと
+- CTE（Common Table Expression）：WITH句でサブクエリに名前をつける
+- 複数CTEはカンマで繋ぐ
+- CTEはJOINの代替ではなく、書き方をきれいにする道具
+
+---
+
+#### 問題5
+- URL：https://platform.stratascratch.com/coding/10127-calculate-samanthas-and-lisas-total-sales-revenue
+- 難易度：Easy
+- 使った構文：SUM, WHERE, OR
+
+自分の解答
+select sum(sales_revenue) as total_revenue
+from sales_performance
+where salesperson = 'Lisa'
+      or salesperson = 'Samantha';
+
+---
+
+#### 問題6
+- URL：https://platform.stratascratch.com/coding/10024-wine-varieties-tasted-by-roger-voss
+- 難易度：Easy
+- 使った構文：SELECT DISTINCT, WHERE, IS NOT NULL
+
+自分の解答
+SELECT DISTINCT variety
+FROM winemag_p2
+WHERE taster_name = 'Roger Voss'
+    and region_1 is not NULL;
+
+学んだこと
+- DISTINCTに括弧は不要（つけても動くDBもあるが正式ではない）
+
+---
+
+#### 問題7
+- URL：https://platform.stratascratch.com/coding/10005-hour-of-highest-gas-expense
+- 難易度：Easy
+- 使った構文：WHERE, MAX, サブクエリ
+
+自分の解答
+SELECT l.hour
+FROM lyft_rides l
+WHERE l.gasoline_cost = (select MAX(gasoline_cost)
+              from lyft_rides a);
+
+模範解答との差分
+- ORDER BY + LIMIT 1でもシンプルに解ける
+- ただし同率最高値が複数ある場合は自分のサブクエリの方が正確
+
+学んだこと
+- サブクエリ内でJOINしない（テーブル1つ）ならエイリアス不要
+- ORDER BY + LIMIT 1は「1行だけ返す」シンプルな書き方
