@@ -180,3 +180,50 @@ WHERE l.gasoline_cost = (select MAX(gasoline_cost)
 学んだこと
 - サブクエリ内でJOINしない（テーブル1つ）ならエイリアス不要
 - ORDER BY + LIMIT 1は「1行だけ返す」シンプルな書き方
+
+
+## 2026-06-02
+
+### StraScratch 7問
+
+---
+
+#### Easy 5問（ノーミス）
+- https://platform.stratascratch.com/coding/10004-find-all-lyft-rides-which-happened-on-rainy-days-before-noon
+- https://platform.stratascratch.com/coding/10003-lyft-driver-wages（タイポのみ、ロジックは正解）
+- https://platform.stratascratch.com/coding/9992-find-artists-that-have-been-on-spotify-the-most-number-of-times
+- https://platform.stratascratch.com/coding/9991-top-ranked-songs
+- https://platform.stratascratch.com/coding/9943-winter-olympics-events-list-by-height
+
+---
+
+#### Medium 1問
+- URL：https://platform.stratascratch.com/coding/10352-users-by-avg-session-time
+- 使った構文：FROM句サブクエリ, JOIN, DATE(), MAX, MIN, AVG, GROUP BY
+
+自分の最終回答
+SELECT l.user_id, AVG(e.min_timestamp - l.max_timestamp) as avg_session_duration
+FROM (SELECT user_id, DATE(timestamp) AS date, MAX(timestamp) as max_timestamp
+      FROM facebook_web_log
+      WHERE action = 'page_load'
+      GROUP BY user_id, date) l
+JOIN (SELECT user_id, DATE(timestamp) AS date, MIN(timestamp) as min_timestamp
+      FROM facebook_web_log
+      WHERE action = 'page_exit'
+      GROUP BY user_id, date) e
+ON l.user_id = e.user_id AND l.date = e.date
+GROUP BY l.user_id;
+
+学んだこと
+- JOINの条件は結合キーを全部含める（user_idだけだと違う日が混ざる）
+- AVGの中で引き算することで「日毎の計算」と「平均」が1ステップで完結
+- 全角スペースがSQLエラーの原因になる
+- GROUP BYでambiguousエラー→テーブル名.カラム名で明示する
+- EXTRACT(EPOCH FROM ...)でタイムスタンプ差を秒数に変換（PostgreSQL）
+- WHERE load_time < exit_timeで問題文の条件を拾う
+- CTEを使うと複数サブクエリが読みやすくなる
+
+---
+
+#### 明日の課題
+- 模範回答（CTE版）を深掘り・自力で再現する
